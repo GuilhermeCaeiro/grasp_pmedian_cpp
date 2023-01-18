@@ -78,8 +78,7 @@ class Instance {
             p = stoi(splittedHeader.at(2));
             n_candidate_locations = stoi(splittedHeader.at(0));
             n_customer_locations = stoi(splittedHeader.at(0));
-            vector<vector<double>> initialCosts(n_candidate_locations, vector<double> (n_customer_locations, 10000000.0));
-            
+            costs = new vector<vector<double>>(n_candidate_locations, vector<double> (n_customer_locations, 10000000.0));
 
             while (getline(fileReader, tmp)){
                 //cout << tmp << endl;
@@ -92,22 +91,22 @@ class Instance {
                 int position_b = stoi(splittedLine.at(1));
                 int cost = stoi(splittedLine.at(2));
 
-                initialCosts[position_a - 1][position_b - 1] = cost;
-                initialCosts[position_b - 1][position_a - 1] = cost;
+                (*costs)[position_a - 1][position_b - 1] = cost;
+                (*costs)[position_b - 1][position_a - 1] = cost;
 
                 cout << position_a << " " << position_b << " " << cost << endl;
             }
 
             for (int i = 0; i < n_candidate_locations; i++){
-                initialCosts[i][i] = 0.0;
+                (*costs)[i][i] = 0.0;
             }
 
-            Utils::printCostsVector(initialCosts);
+            Utils::printCostsVector(*costs);
 
             //vector<vector<double>> finalCosts = 
-            Utils::floydWarshall(initialCosts, n_candidate_locations);
+            Utils::floydWarshall(*costs, n_candidate_locations);
 
-            costs = &initialCosts;
+            //costs = &initialCosts;
 
             Utils::printCostsVector(*costs);
 
@@ -148,13 +147,13 @@ class GRASP {
                 for (int i = 0; i < num_rows; i++){
                     int row_number = solution[i];
 
-                    //vector<vector<double>> &costs = *(instance->costs);
+                    vector<vector<double>> &costs = *(instance->costs);
 
                     //Utils::printCostsVector(*costs);
 
-                    //cout << instance->costs << " " << instance->costs->at(row_number,j) << endl;
-                    //double value = instance->costs[row_number][j];
-                    double value = 0;
+                    //cout << instance->costs << " " << costs[row_number][j] << endl;
+                    double value = costs[row_number][j];
+                    //double value = 0;
                     if (value < column_min){
                         column_min = value;
                     }
