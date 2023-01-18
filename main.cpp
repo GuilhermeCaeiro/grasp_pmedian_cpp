@@ -4,6 +4,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+const int INF = 1000000.0;
+
 class Solution {
     public:
         string solution;
@@ -43,7 +45,7 @@ class Instance {
         int p;
         int n_candidate_locations;
         int n_customer_locations;
-        vector<vector<double>> *costs;
+        vector<vector<double>> costs;
 
         Instance(string aPath){
             path = aPath;
@@ -67,6 +69,12 @@ class Instance {
             return split_line;
         }
 
+        void initializeCosts(int num_lines, int num_columns){
+            for (int i = 0; i < num_lines; i++){
+                costs.push_back(vector<double> (num_columns, INF));
+            }
+        }
+
         void readInstanceFile(){
             ifstream fileReader(path);
             
@@ -78,7 +86,8 @@ class Instance {
             p = stoi(splittedHeader.at(2));
             n_candidate_locations = stoi(splittedHeader.at(0));
             n_customer_locations = stoi(splittedHeader.at(0));
-            costs = new vector<vector<double>>(n_candidate_locations, vector<double> (n_customer_locations, 10000000.0));
+            //costs = new vector<vector<double>>(n_candidate_locations, vector<double> (n_customer_locations, 10000000.0));
+            initializeCosts(n_candidate_locations, n_customer_locations);
 
             while (getline(fileReader, tmp)){
                 //cout << tmp << endl;
@@ -91,30 +100,30 @@ class Instance {
                 int position_b = stoi(splittedLine.at(1));
                 int cost = stoi(splittedLine.at(2));
 
-                (*costs)[position_a - 1][position_b - 1] = cost;
-                (*costs)[position_b - 1][position_a - 1] = cost;
+                costs[position_a - 1][position_b - 1] = cost;
+                costs[position_b - 1][position_a - 1] = cost;
 
                 cout << position_a << " " << position_b << " " << cost << endl;
             }
 
             for (int i = 0; i < n_candidate_locations; i++){
-                (*costs)[i][i] = 0.0;
+                costs[i][i] = 0.0;
             }
 
-            Utils::printCostsVector(*costs);
+            Utils::printCostsVector(costs);
 
             //vector<vector<double>> finalCosts = 
-            Utils::floydWarshall(*costs, n_candidate_locations);
+            Utils::floydWarshall(costs, n_candidate_locations);
 
             //costs = &initialCosts;
 
-            Utils::printCostsVector(*costs);
+            Utils::printCostsVector(costs);
 
         }
 
         void test(){
-            cout << "Testing if the contents of costs still exist.";
-            Utils::printCostsVector(*costs);
+            cout << "Testing if the contents of costs still exist." << endl;
+            Utils::printCostsVector(costs);
         }
 };
 
@@ -147,12 +156,12 @@ class GRASP {
                 for (int i = 0; i < num_rows; i++){
                     int row_number = solution[i];
 
-                    vector<vector<double>> &costs = *(instance->costs);
+                    //vector<vector<double>> &costs = *(instance->costs);
 
                     //Utils::printCostsVector(*costs);
 
                     //cout << instance->costs << " " << costs[row_number][j] << endl;
-                    double value = costs[row_number][j];
+                    double value = instance->costs[row_number][j];
                     //double value = 0;
                     if (value < column_min){
                         column_min = value;
