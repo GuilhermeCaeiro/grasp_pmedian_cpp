@@ -362,7 +362,7 @@ int main() {
     // seeding the random number generator
     rng.seed(1);
 
-    Instance instance("pmed1.txt");
+    Instance instance("pmed10.txt");
     //cout << instance.path << endl;
 
     GRASP grasp(instance, 0.5, 2000, "best_improvement");
