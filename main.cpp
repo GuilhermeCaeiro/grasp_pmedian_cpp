@@ -44,6 +44,17 @@ class Solution {
         //}
 };
 
+class CustomerAllocation {
+    public:
+        int location;
+        double cost;
+
+        CustomerAllocation(int aLocation, double aCost){
+            location = aLocation;
+            cost = aCost;
+        }
+};
+
 class Utils {
     public:
         static void printCostsVector(vector<vector<double>> &aVector){
@@ -184,6 +195,7 @@ class GRASP {
         string localSearchMethod;
         int seed;
         Solution bestSolution;
+        vector<CustomerAllocation> customerAllocations;
 
         GRASP(Instance &aInstance, double aRCL_size, int aMaxIterations, string aLocalSearchMethod, int aSeed = 0){
             instance = &aInstance;
@@ -193,9 +205,8 @@ class GRASP {
             seed = aSeed;
 
             bestSolution.fitness = INF;
-
-            vector<int> test = {2, 5, 7, 1};
-            fitness(test);
+            //vector<int> test = {2, 5, 7, 1};
+            //fitness(test);
         }
 
         double fitness(vector<int> &solution){
@@ -235,6 +246,85 @@ class GRASP {
             return objective_value + penalty;
         }
 
+        // partcalc -> partial calculation
+        double fitness_partcalc(vector<int> &solution, int addedLocation, int removedLocation = -1){
+            int num_columns = instance->n_customer_locations;
+            int num_rows = solution.size();
+            double totalCost = 0.0;
+
+            cout << "Solution being evaluated: ";
+            Utils::printVectorOfInt(solution);
+            cout << endl;
+            cout << "addedLocation: " << addedLocation << "\nremovedLocation: " << removedLocation << endl; 
+
+            // initializing allocations if this function wasn't run yet.
+            if (customerAllocations.size() == 0){
+                cout << "customerAllocations is empty" << endl;
+                for (int j = 0; j < num_columns; j++){
+                    double column_min = INF;
+                    int locationIndex = -1;
+
+                    for (int i = 0; i < num_rows; i++){
+                        int row_number = solution[i];
+
+                        double value = instance->costs[row_number][j];
+                        if (value < column_min){
+                            locationIndex = row_number;
+                            column_min = value;
+                        }
+                    }
+
+                    customerAllocations.push_back(CustomerAllocation(locationIndex, column_min));
+                    totalCost += column_min;
+                }
+            }else{
+                for (int j = 0; j < num_columns; j++){
+                    if (customerAllocations[j].location == removedLocation){ // customer must be allocated to another location present in the solution
+                        double column_min = INF;
+                        int locationIndex = -1;
+
+                        for (int i = 0; i < num_rows; i++){
+                            int row_number = solution[i];
+
+                            double value = instance->costs[row_number][j];
+                            //double value = 0;
+                            if (value < column_min){
+                                locationIndex = row_number;
+                                column_min = value;
+                            }
+                        }
+
+                        customerAllocations[j].location = locationIndex;
+                        customerAllocations[j].cost = column_min;
+                        totalCost += column_min;
+
+                        cout << "A1 " << customerAllocations[j].location << " " << customerAllocations[j].cost << " " << addedLocation << " " << removedLocation << " " << totalCost << endl;
+                        //exit(0);
+                    }else{ 
+                        double costForTheNewLocation = instance->costs[addedLocation][j];
+                        if (customerAllocations[j].cost > costForTheNewLocation){ // checks if changing to the new location improves the solution
+                            customerAllocations[j].location = addedLocation;
+                            customerAllocations[j].cost = costForTheNewLocation;
+                        }
+                        totalCost += customerAllocations[j].cost;
+
+                        cout << "B1 " << customerAllocations[j].location << " " << customerAllocations[j].cost << " " << addedLocation << " " << removedLocation << " " << totalCost << endl;
+                    }
+                }
+            }
+
+            for (int i = 0; i < customerAllocations.size(); i++){
+                cout << "(" << customerAllocations[i].location << "," << customerAllocations[i].cost << ")-";
+            }
+
+            double penalty = 100 * fabs(instance->p - solution.size());
+
+            cout << totalCost << " " << penalty << " " << totalCost + penalty << endl;
+            //exit(0);
+
+            return totalCost + penalty;
+        }
+
         Solution greedyRandomizedSearch(){
             vector<int> candidateLocations;
             vector<int> partialSolution;
@@ -246,8 +336,12 @@ class GRASP {
 
             for (int i = 0; i < instance->p; i++){
                 vector<Solution> candidateSolutions;
+                int previousCandidateLocation;
+
+                cout << "p " << i << endl;
                 
                 for  (int j = 0; j < candidateLocations.size(); j++){
+                    cout << j << endl;
                     int candidateLocation = candidateLocations[j];
                     vector<int> candidateSolutionLocations;
 
@@ -255,11 +349,19 @@ class GRASP {
                         candidateSolutionLocations.push_back(partialSolution[k]);
                     candidateSolutionLocations.push_back(candidateLocation);
 
-                    double solutionFitness = fitness(candidateSolutionLocations);
+                    cout << "GRS " << endl;
+
+                    int removedLocation = (j == 0) ? -1 : previousCandidateLocation; // from previous iteration
+                    double solutionFitness = fitness_partcalc(candidateSolutionLocations, candidateLocation, removedLocation);
                     //cout << solutionFitness << endl;
                     Solution candidateSolution(candidateSolutionLocations, solutionFitness, candidateLocation);
-
                     candidateSolutions.push_back(candidateSolution);
+                    
+                    previousCandidateLocation = candidateLocation;
+
+                    //if (j == 4){
+                    //    exit(0);
+                    //}
                 }
 
                 sort(candidateSolutions.begin(), candidateSolutions.end());
@@ -277,7 +379,21 @@ class GRASP {
                     ), 
                     candidateLocations.end()
                 );
+
+                cout << "Chosen solution: ";
+                Utils::printVectorOfInt(chosen.solution);
+                cout << endl;
+
+                customerAllocations.clear();
+
+                //exit(0);
+
+                //if (i == 1){
+                //    exit(0);
+                //}
             }
+
+            //exit(0);
 
             //Utils::printVectorOfInt(chosen.solution);
             //cout << chosen.fitness << endl;
@@ -295,9 +411,19 @@ class GRASP {
                 }
             }
 
+            cout << "Chosen locations: ";
+            Utils::printVectorOfInt(chosenLocations);
+            cout << endl;
+
+            cout << "Not chosen locations: ";
+            Utils::printVectorOfInt(notChosenLocations);
+            cout << endl;
+
             Solution improvedSolution = solution;
 
             for (int chosen = 0; chosen < chosenLocations.size(); chosen++){
+                int previousCandidateLocation;
+
                 for (int notChosen = 0; notChosen < notChosenLocations.size(); notChosen++){
                     vector<int> candidateSolution = chosenLocations; // chosenLocations is copied to candidateSolution
 
@@ -313,7 +439,10 @@ class GRASP {
 
                     candidateSolution.push_back(notChosenLocations[notChosen]);
 
-                    double candidateFitness = fitness(candidateSolution);
+                    cout << "LS " << endl;
+
+                    int removedLocation = (notChosen == 0) ? -1 : previousCandidateLocation; // from previous iteration
+                    double candidateFitness = fitness_partcalc(candidateSolution, notChosenLocations[notChosen], removedLocation); // (sol., added, removed)
 
                     if (candidateFitness < improvedSolution.fitness){
                         Solution newImprovedSolution(candidateSolution, candidateFitness);
@@ -324,8 +453,11 @@ class GRASP {
                         }
                     }
 
+                    previousCandidateLocation = notChosenLocations[notChosen];
 
                 }
+
+                customerAllocations.clear();
             }
 
             return improvedSolution;
@@ -346,11 +478,13 @@ class GRASP {
                 if (solution.fitness < bestSolution.fitness){
                     bestSolution = solution;
                 }
-                //break;
+                break;
             }
             milliseconds finishTime = Utils::getCurrentTimeInMS();
             //milliseconds totalTime = finishTime = startTime;
-            cout << "Solution fitness" << bestSolution.fitness << "Total time in s: " <<  Utils::msToNum(finishTime - startTime) / 1000.0 << endl;
+            Utils::printVectorOfInt(bestSolution.solution);
+            cout << endl;
+            cout << "Instance " << instance->path << " | Solution fitness " << bestSolution.fitness << " | Total time in s: " <<  Utils::msToNum(finishTime - startTime) / 1000.0 << endl;
 
             return bestSolution;
         }
@@ -362,10 +496,10 @@ int main() {
     // seeding the random number generator
     rng.seed(1);
 
-    Instance instance("pmed10.txt");
+    Instance instance("pmed1.txt");
     //cout << instance.path << endl;
 
-    GRASP grasp(instance, 0.5, 2000, "best_improvement");
+    GRASP grasp(instance, 0.5, 1, "best_improvement");
     Solution result = grasp.loop();
 
     return 0;
