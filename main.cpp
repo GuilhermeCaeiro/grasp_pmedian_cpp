@@ -1,16 +1,45 @@
 #include <iostream>
+#include <random>
 #include <fstream>
+#include <algorithm>
 #include <cmath>
 #include <bits/stdc++.h>
 using namespace std;
 
 const int INF = 1000000.0;
+static mt19937 rng;
 
 class Solution {
     public:
-        string solution;
+        vector<int> solution;
         double fitness;
-        double tmpCandidateLocation; // added just to facilitate some things in the code
+        int tmpCandidateLocation; // added just to facilitate some things in the code
+
+        Solution(){
+
+        }
+
+        Solution(vector<int> aSolution, double aFitness){
+            solution = aSolution;
+            fitness = aFitness;
+        }
+        
+        Solution(vector<int> aSolution, double aFitness, int aTmpCandidateLocation){
+            solution = aSolution;
+            fitness = aFitness;
+            tmpCandidateLocation = aTmpCandidateLocation;
+        }
+
+        bool operator< (const Solution &otherSolution) const {
+            return fitness < otherSolution.fitness;
+        }
+
+        //Solution& operator=(const Solution& otherSolution){
+        //    solution = otherSolution.solution;
+        //    fitness = otherSolution.fitness;
+        //    tmpCandidateLocation = otherSolution.tmpCandidateLocation;
+        //    return *this;
+        //}
 };
 
 class Utils {
@@ -36,6 +65,16 @@ class Utils {
                     }
                 }
             }
+        }
+
+        static int getRandomWithinRange(int start, int end){
+            uniform_int_distribution<uint32_t> uint_dist(start, end);
+            return uint_dist(rng);
+        }
+
+        static void printVectorOfInt(vector<int> &vectorOfInt){
+            for (int intValue: vectorOfInt)
+                cout << intValue << " ";
         }
 };
 
@@ -134,6 +173,7 @@ class GRASP {
         int max_iterations;
         string local_search_method;
         int seed;
+        Solution bestSoluton;
 
         GRASP(Instance &aInstance, double aRCL_size, int aMax_iterations, string aLocal_search_method, int aSeed = 0){
             instance = &aInstance;
@@ -141,6 +181,8 @@ class GRASP {
             max_iterations = aMax_iterations;
             local_search_method = aLocal_search_method;
             seed = aSeed;
+
+            bestSoluton.fitness = INF;
 
             vector<int> test = {2, 5, 7, 1};
             fitness(test);
@@ -182,15 +224,93 @@ class GRASP {
 
             return objective_value + penalty;
         }
+
+        Solution greedyRandomizedSearch(){
+            vector<int> candidateLocations;
+            vector<int> partialSolution;
+            Solution chosen;
+
+            // initializing candidate locations
+            for (int i = 0; i < instance->n_candidate_locations; i++)
+                candidateLocations.push_back(i);
+
+            for (int i = 0; i < instance->p; i++){
+                vector<Solution> candidateSolutions;
+                
+                for  (int j = 0; j < candidateLocations.size(); j++){
+                    int candidateLocation = candidateLocations[j];
+                    vector<int> candidateSolutionLocations;
+
+                    for (int k = 0; k < partialSolution.size(); k++)
+                        candidateSolutionLocations.push_back(partialSolution[k]);
+                    candidateSolutionLocations.push_back(candidateLocation);
+
+                    double solutionFitness = fitness(candidateSolutionLocations);
+                    cout << solutionFitness << endl;
+                    Solution candidateSolution(candidateSolutionLocations, solutionFitness, candidateLocation);
+
+                    candidateSolutions.push_back(candidateSolution);
+                }
+
+                sort(candidateSolutions.begin(), candidateSolutions.end());
+
+                int currentRCLSize = ceil(candidateSolutions.size() * rcl_size);
+                int rclSolutionIndex = Utils::getRandomWithinRange(0, currentRCLSize - 1);
+                chosen = candidateSolutions[rclSolutionIndex];
+                
+                partialSolution.push_back(chosen.tmpCandidateLocation);
+                candidateLocations.erase(
+                    std::remove(
+                        candidateLocations.begin(), 
+                        candidateLocations.end(), 
+                        chosen.tmpCandidateLocation
+                    ), 
+                    candidateLocations.end()
+                );
+
+
+            }
+
+            Utils::printVectorOfInt(chosen.solution);
+            cout << chosen.fitness << endl;
+
+            return chosen;
+        }
+
+        Solution localSearch(){
+
+        }
+
+        Solution loop(){
+            
+            for (int iteration = 0; iteration < max_iterations; iteration++){
+                if ((iteration % 1000) == 0)
+                    cout << "Iteration " << iteration << " Time " << "" << endl;
+
+                Solution solution = greedyRandomizedSearch();
+                //solution = localSearch();
+
+                if (solution.fitness < bestSoluton.fitness){
+                    bestSoluton = solution;
+                }
+                break;
+            }
+
+            return bestSoluton;
+        }
 };
 
 int main() {
     cout << "Hello World!\n";
 
+    // seeding the random number generator
+    rng.seed(1);
+
     Instance instance("pmed1.txt");
     cout << instance.path << endl;
 
     GRASP grasp(instance, 0.5, 1000, "best_improvement");
+    Solution result = grasp.loop();
 
     return 0;
 } 
