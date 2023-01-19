@@ -3,8 +3,10 @@
 #include <fstream>
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 #include <bits/stdc++.h>
 using namespace std;
+using namespace std::chrono;
 
 const int INF = 1000000.0;
 static mt19937 rng;
@@ -76,6 +78,14 @@ class Utils {
             for (int intValue: vectorOfInt)
                 cout << intValue << " ";
         }
+
+        static milliseconds getCurrentTimeInMS(){
+            return duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+        }
+
+        static int msToNum(milliseconds ms){
+            return std::chrono::duration_cast<std::chrono::milliseconds>(ms).count();
+        }
 };
 
 class Instance {
@@ -90,7 +100,7 @@ class Instance {
             path = aPath;
 
             readInstanceFile();
-            test();
+            //test();
         }
 
         vector<string> splitLine(string line){
@@ -142,21 +152,21 @@ class Instance {
                 costs[position_a - 1][position_b - 1] = cost;
                 costs[position_b - 1][position_a - 1] = cost;
 
-                cout << position_a << " " << position_b << " " << cost << endl;
+                //cout << position_a << " " << position_b << " " << cost << endl;
             }
 
             for (int i = 0; i < n_candidate_locations; i++){
                 costs[i][i] = 0.0;
             }
 
-            Utils::printCostsVector(costs);
+            //Utils::printCostsVector(costs);
 
             //vector<vector<double>> finalCosts = 
             Utils::floydWarshall(costs, n_candidate_locations);
 
             //costs = &initialCosts;
 
-            Utils::printCostsVector(costs);
+            //Utils::printCostsVector(costs);
 
         }
 
@@ -170,19 +180,19 @@ class GRASP {
     public:
         Instance * instance;
         double rcl_size;
-        int max_iterations;
-        string local_search_method;
+        int maxIterations;
+        string localSearchMethod;
         int seed;
-        Solution bestSoluton;
+        Solution bestSolution;
 
-        GRASP(Instance &aInstance, double aRCL_size, int aMax_iterations, string aLocal_search_method, int aSeed = 0){
+        GRASP(Instance &aInstance, double aRCL_size, int aMaxIterations, string aLocalSearchMethod, int aSeed = 0){
             instance = &aInstance;
             rcl_size = aRCL_size;
-            max_iterations = aMax_iterations;
-            local_search_method = aLocal_search_method;
+            maxIterations = aMaxIterations;
+            localSearchMethod = aLocalSearchMethod;
             seed = aSeed;
 
-            bestSoluton.fitness = INF;
+            bestSolution.fitness = INF;
 
             vector<int> test = {2, 5, 7, 1};
             fitness(test);
@@ -220,7 +230,7 @@ class GRASP {
 
             double penalty = 100 * fabs(instance->p - solution.size());
 
-            cout << objective_value << " " << penalty << " " << objective_value + penalty << endl;
+            //cout << objective_value << " " << penalty << " " << objective_value + penalty << endl;
 
             return objective_value + penalty;
         }
@@ -246,7 +256,7 @@ class GRASP {
                     candidateSolutionLocations.push_back(candidateLocation);
 
                     double solutionFitness = fitness(candidateSolutionLocations);
-                    cout << solutionFitness << endl;
+                    //cout << solutionFitness << endl;
                     Solution candidateSolution(candidateSolutionLocations, solutionFitness, candidateLocation);
 
                     candidateSolutions.push_back(candidateSolution);
@@ -267,49 +277,95 @@ class GRASP {
                     ), 
                     candidateLocations.end()
                 );
-
-
             }
 
-            Utils::printVectorOfInt(chosen.solution);
-            cout << chosen.fitness << endl;
+            //Utils::printVectorOfInt(chosen.solution);
+            //cout << chosen.fitness << endl;
 
             return chosen;
         }
 
-        Solution localSearch(){
+        Solution localSearch(Solution &solution){
+            vector<int> chosenLocations = solution.solution;
+            vector<int> notChosenLocations;
 
+            for (int i = 0; i < instance->n_candidate_locations; i++){
+                if (!(std::find(chosenLocations.begin(), chosenLocations.end(), i) != chosenLocations.end())){
+                    notChosenLocations.push_back(i);
+                }
+            }
+
+            Solution improvedSolution = solution;
+
+            for (int chosen = 0; chosen < chosenLocations.size(); chosen++){
+                for (int notChosen = 0; notChosen < notChosenLocations.size(); notChosen++){
+                    vector<int> candidateSolution = chosenLocations; // chosenLocations is copied to candidateSolution
+
+                    // Swaps a chosen location for a not chosen one.
+                    candidateSolution.erase(
+                        std::remove(
+                            candidateSolution.begin(), 
+                            candidateSolution.end(), 
+                            chosenLocations[chosen]
+                        ), 
+                        candidateSolution.end()
+                    );
+
+                    candidateSolution.push_back(notChosenLocations[notChosen]);
+
+                    double candidateFitness = fitness(candidateSolution);
+
+                    if (candidateFitness < improvedSolution.fitness){
+                        Solution newImprovedSolution(candidateSolution, candidateFitness);
+                        improvedSolution = newImprovedSolution;
+
+                        if (localSearchMethod == "first_improvement"){
+                            return improvedSolution;
+                        }
+                    }
+
+
+                }
+            }
+
+            return improvedSolution;
         }
 
         Solution loop(){
-            
-            for (int iteration = 0; iteration < max_iterations; iteration++){
-                if ((iteration % 1000) == 0)
-                    cout << "Iteration " << iteration << " Time " << "" << endl;
+            milliseconds startTime = Utils::getCurrentTimeInMS();
+
+            for (int iteration = 0; iteration < maxIterations; iteration++){
+                if ((iteration % 1000) == 0){
+                    milliseconds currentTime = Utils::getCurrentTimeInMS();
+                    cout << "Iteration " << iteration << " Time " << Utils::msToNum(currentTime - startTime) / 1000.0 << endl;
+                }
 
                 Solution solution = greedyRandomizedSearch();
-                //solution = localSearch();
+                solution = localSearch(solution);
 
-                if (solution.fitness < bestSoluton.fitness){
-                    bestSoluton = solution;
+                if (solution.fitness < bestSolution.fitness){
+                    bestSolution = solution;
                 }
-                break;
+                //break;
             }
+            milliseconds finishTime = Utils::getCurrentTimeInMS();
+            //milliseconds totalTime = finishTime = startTime;
+            cout << "Solution fitness" << bestSolution.fitness << "Total time in s: " <<  Utils::msToNum(finishTime - startTime) / 1000.0 << endl;
 
-            return bestSoluton;
+            return bestSolution;
         }
 };
 
 int main() {
-    cout << "Hello World!\n";
+    //cout << "Hello World!\n";
 
     // seeding the random number generator
     rng.seed(1);
 
     Instance instance("pmed1.txt");
-    cout << instance.path << endl;
+    //cout << instance.path << endl;
 
-    GRASP grasp(instance, 0.5, 1000, "best_improvement");
+    GRASP grasp(instance, 0.5, 2000, "best_improvement");
     Solution result = grasp.loop();
 
     return 0;
