@@ -252,14 +252,14 @@ class GRASP {
             int num_rows = solution.size();
             double totalCost = 0.0;
 
-            cout << "Solution being evaluated: ";
-            Utils::printVectorOfInt(solution);
-            cout << endl;
-            cout << "addedLocation: " << addedLocation << "\nremovedLocation: " << removedLocation << endl; 
+            //cout << "Solution being evaluated: ";
+            //Utils::printVectorOfInt(solution);
+            //cout << endl;
+            //cout << "addedLocation: " << addedLocation << "\nremovedLocation: " << removedLocation << endl; 
 
             // initializing allocations if this function wasn't run yet.
             if (customerAllocations.size() == 0){
-                cout << "customerAllocations is empty" << endl;
+                //cout << "customerAllocations is empty" << endl;
                 for (int j = 0; j < num_columns; j++){
                     double column_min = INF;
                     int locationIndex = -1;
@@ -298,7 +298,7 @@ class GRASP {
                         customerAllocations[j].cost = column_min;
                         totalCost += column_min;
 
-                        cout << "A1 " << customerAllocations[j].location << " " << customerAllocations[j].cost << " " << addedLocation << " " << removedLocation << " " << totalCost << endl;
+                        //cout << "A1 " << customerAllocations[j].location << " " << customerAllocations[j].cost << " " << addedLocation << " " << removedLocation << " " << totalCost << endl;
                         //exit(0);
                     }else{ 
                         double costForTheNewLocation = instance->costs[addedLocation][j];
@@ -308,18 +308,18 @@ class GRASP {
                         }
                         totalCost += customerAllocations[j].cost;
 
-                        cout << "B1 " << customerAllocations[j].location << " " << customerAllocations[j].cost << " " << addedLocation << " " << removedLocation << " " << totalCost << endl;
+                        //cout << "B1 " << customerAllocations[j].location << " " << customerAllocations[j].cost << " " << addedLocation << " " << removedLocation << " " << totalCost << endl;
                     }
                 }
             }
 
-            for (int i = 0; i < customerAllocations.size(); i++){
-                cout << "(" << customerAllocations[i].location << "," << customerAllocations[i].cost << ")-";
-            }
+            //for (int i = 0; i < customerAllocations.size(); i++){
+            //    cout << "(" << customerAllocations[i].location << "," << customerAllocations[i].cost << ")-";
+            //}
 
             double penalty = 100 * fabs(instance->p - solution.size());
 
-            cout << totalCost << " " << penalty << " " << totalCost + penalty << endl;
+            //cout << totalCost << " " << penalty << " " << totalCost + penalty << endl;
             //exit(0);
 
             return totalCost + penalty;
@@ -338,10 +338,10 @@ class GRASP {
                 vector<Solution> candidateSolutions;
                 int previousCandidateLocation;
 
-                cout << "p " << i << endl;
+                //cout << "p " << i << endl;
                 
                 for  (int j = 0; j < candidateLocations.size(); j++){
-                    cout << j << endl;
+                    //cout << j << endl;
                     int candidateLocation = candidateLocations[j];
                     vector<int> candidateSolutionLocations;
 
@@ -349,7 +349,7 @@ class GRASP {
                         candidateSolutionLocations.push_back(partialSolution[k]);
                     candidateSolutionLocations.push_back(candidateLocation);
 
-                    cout << "GRS " << endl;
+                    //cout << "GRS " << endl;
 
                     int removedLocation = (j == 0) ? -1 : previousCandidateLocation; // from previous iteration
                     double solutionFitness = fitness_partcalc(candidateSolutionLocations, candidateLocation, removedLocation);
@@ -380,9 +380,9 @@ class GRASP {
                     candidateLocations.end()
                 );
 
-                cout << "Chosen solution: ";
-                Utils::printVectorOfInt(chosen.solution);
-                cout << endl;
+                //cout << "Chosen solution: ";
+                //Utils::printVectorOfInt(chosen.solution);
+                //cout << endl;
 
                 customerAllocations.clear();
 
@@ -411,13 +411,13 @@ class GRASP {
                 }
             }
 
-            cout << "Chosen locations: ";
-            Utils::printVectorOfInt(chosenLocations);
-            cout << endl;
+            //cout << "Chosen locations: ";
+            //Utils::printVectorOfInt(chosenLocations);
+            //cout << endl;
 
-            cout << "Not chosen locations: ";
-            Utils::printVectorOfInt(notChosenLocations);
-            cout << endl;
+            //cout << "Not chosen locations: ";
+            //Utils::printVectorOfInt(notChosenLocations);
+            //cout << endl;
 
             Solution improvedSolution = solution;
 
@@ -439,7 +439,7 @@ class GRASP {
 
                     candidateSolution.push_back(notChosenLocations[notChosen]);
 
-                    cout << "LS " << endl;
+                    //cout << "LS " << endl;
 
                     int removedLocation = (notChosen == 0) ? -1 : previousCandidateLocation; // from previous iteration
                     double candidateFitness = fitness_partcalc(candidateSolution, notChosenLocations[notChosen], removedLocation); // (sol., added, removed)
@@ -478,7 +478,7 @@ class GRASP {
                 if (solution.fitness < bestSolution.fitness){
                     bestSolution = solution;
                 }
-                break;
+                //break;
             }
             milliseconds finishTime = Utils::getCurrentTimeInMS();
             //milliseconds totalTime = finishTime = startTime;
@@ -496,10 +496,10 @@ int main() {
     // seeding the random number generator
     rng.seed(1);
 
-    Instance instance("pmed1.txt");
+    Instance instance("pmed10.txt");
     //cout << instance.path << endl;
 
-    GRASP grasp(instance, 0.5, 1, "best_improvement");
+    GRASP grasp(instance, 0.5, 10000, "best_improvement");
     Solution result = grasp.loop();
 
     return 0;
