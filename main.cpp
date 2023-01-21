@@ -506,6 +506,8 @@ class GRASP {
 
                 string outputstring = to_string(seed) + "," +
                     instance->path + "," + 
+                    to_string(rcl_size) + "," +
+                    localSearchMethod + "," +
                     to_string(iteration + 1) + "," + 
                     to_string(solution.fitness) + "," +
                     to_string(bestSolution.fitness) + "," +
