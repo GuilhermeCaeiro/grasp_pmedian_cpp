@@ -28,58 +28,40 @@ import pandas as pd
 #    "tai100b": [1058131796., 130115042000.],
 #}
 
-max_simultaneos_processes = 2
+gensetup_file_path = ""
+max_simultaneos_processes = 1
 num_executions_per_instance = 10
 num_iterations = 10000
+
+#print(sys.argv)
+
+
+if len(sys.argv) > 1:
+    max_simultaneos_processes = int(sys.argv[1])
+
+if len(sys.argv) > 2:
+    gensetup_file_path = sys.argv[2]
 
 #scp_boundaries = pd.read_csv("scp_boundaries.csv", sep = ",", names = ["instance", "lower", "upper"])
 #qap_boundaries = pd.read_csv("qap_boundaries.csv", sep = ",", names = ["instance", "lower", "upper"])
 #boundaries = pd.concat([scp_boundaries, qap_boundaries], ignore_index=True)
 
-instances = [
-    #["tai30a.dat", 1, 1000000, [], [1706855, 8596620]], # inst, num exec, num it/exec, seeds, bounds
-    #["tai35a.dat", 1, 1000000, [], [2216627, 11803330]],
-    #["tai40a.dat", 1, 1000000, [], [2843274, 15469120]],
-    #["tai50a.dat", 1, 1000000, [], [4390920, 24275700]],
-    #["tai50b.dat", 1, 1000000, [], [395543467, 30319229200]],
-    #["tai100a.dat", 1, 1000000, [], [15844731, 97714200]],
-    #["tai100b.dat", 1, 1000000, [], [1058131796, 130115042000]],
-    #["tai150b.dat", 1, 1000000, [], [441786736, 26078235600]],
-    #["sko42.dat", 1, 1000000, [], [14934, 168840]],
-    #["sko56.dat", 1, 1000000, [], [32610, 358400]],
-    #["sko64.dat", 1, 1000000, [], [45736, 504320]],
-    #["sko100a.dat", 1, 1000000, [], [143846, 1584000]],
-    #["sko100b.dat", 1, 1000000, [], [145522, 1584000]],
-    #["tho40.dat", 1, 1000000, [], [224414, 3730400]],
-    #["wil50a.dat", 1, 1000000, [], [47098, 258300]],
+instances = []
 
-    #["tai30a.dat", 20, 1000000, [3020, 11080, 20195, 21055, 23706, 32898, 33342, 38358, 40743, 59290], [1706855, 8596620]]#, 71248, 78526, 79514, 80705, 82977, 89929, 93232, 93982, 97344, 98457], [1706855, 8596620]]
-    
-    #["tai35a.dat", 6, 2000, [boundaries["tai35a"]["lower"], boundaries["tai35a"]["upper"]], []]
-    #["tai40a.dat", 6, 2000, [2843274, 15469120], []],
+if gensetup_file_path == "":
+    instances = [
+        ["pmed1.txt", num_executions_per_instance, num_iterations, 0.4, "best_improvement"],
+    ]
+else:
+    print("Retrieving definitions from", gensetup_file_path)
+    gensetup = pd.read_csv(gensetup_file_path, ",", header=None)
+    #print(gensetup)
 
-    #["scp41", 10],
-    #["scp44", 10],
-    #["scp45", 10],
-    #["scp510", 10],
-    #["scp64", 10],
-    #["scpa1", 10],
-    #["scpa4", 10],
-    #["scpb2", 10],
-    #["scpb3", 10],
-    #["scpb4", 10],
-    #["scpc1", 10],
-    #["scpc3", 10],
-    #["scpc5", 10],
-    #["scpd1", 10],
-    #["scpd5", 10],
-
-    #["tai30a.dat", 1, 10000, [1706855, 8596620], []],
-    #["scp47", 1, 10000, [1115, 36570], []],
-
-    ["pmed1.txt", num_executions_per_instance, num_iterations, 0.4, "best_improvement"],
-
-]
+    for index, row in gensetup.iterrows():
+        gensetup = row.values.tolist()
+        instances.append(gensetup)
+print(max_simultaneos_processes, instances)
+#exit(0)        
 
 #for index, row in boundaries.iterrows():
 #    instances.append([
