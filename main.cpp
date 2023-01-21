@@ -465,20 +465,63 @@ class GRASP {
 
         Solution loop(){
             milliseconds startTime = Utils::getCurrentTimeInMS();
+            vector<double> iterationSolutions;
+            int iterationsSinceLastMin = 0;
+            int iterationsSinceBestCost = 0;
+            int totalSingleMinsFound = 0;
+            bool bestUpdated = false;
+
+            std::ofstream outfile(instance->path + "_" + to_string(seed) + "_datasetfull.csv", ios::app);
 
             for (int iteration = 0; iteration < maxIterations; iteration++){
+                milliseconds iterationStartTime = Utils::getCurrentTimeInMS();
+
                 if ((iteration % 1000) == 0){
                     milliseconds currentTime = Utils::getCurrentTimeInMS();
                     cout << "Iteration " << iteration << " Time " << Utils::msToNum(currentTime - startTime) / 1000.0 << endl;
                 }
 
+                // constructive phase
                 Solution solution = greedyRandomizedSearch();
+                // local search phase
                 solution = localSearch(solution);
 
                 if (solution.fitness < bestSolution.fitness){
                     bestSolution = solution;
+
+                    iterationsSinceLastMin = 0;
+                    iterationsSinceBestCost = 0;
+                    totalSingleMinsFound++;
+                    bestUpdated = true;
+                }else if (solution.fitness == bestSolution.fitness){
+                    iterationsSinceLastMin = 0;
                 }
                 //break;
+
+                milliseconds iterationFinishTime = Utils::getCurrentTimeInMS();
+
+
+
+                iterationSolutions.push_back(solution.fitness);
+
+                string outputstring = to_string(seed) + "," +
+                    instance->path + "," + 
+                    to_string(iteration + 1) + "," + 
+                    to_string(solution.fitness) + "," +
+                    to_string(bestSolution.fitness) + "," +
+                    ((bestUpdated) ? "true" : "false") + "," +
+                    to_string(iterationsSinceLastMin) + "," +
+                    to_string(iterationsSinceBestCost) + "," +
+                    to_string(totalSingleMinsFound) + "," +
+                    to_string(Utils::msToNum(iterationFinishTime - iterationStartTime)) + "," +
+                    to_string(Utils::msToNum(iterationFinishTime - startTime)) + "\n";
+
+                outfile << outputstring; 
+
+                iterationsSinceLastMin++;
+                iterationsSinceBestCost++;
+                bestUpdated = false;
+
             }
             milliseconds finishTime = Utils::getCurrentTimeInMS();
             //milliseconds totalTime = finishTime = startTime;
@@ -490,16 +533,31 @@ class GRASP {
         }
 };
 
-int main() {
-    //cout << "Hello World!\n";
+int main(int argc, char** argv) {
+    if (argc < 5){
+        cout << "You MUST provide at least 4 parameters: \"instance file\", \"seed\", \"rcl size\" (value in the range (0,1]) and \"number of iterations\". A fifth one, \"LS mode\", can also be provided and should be \"best_improvement\" (default) or \"first_improvement\".\nExiting...\n";
+        exit(0);
+    }
+    
+    string instanceFile = argv[1];
+    int seed = stoi(argv[2]);
+    double rclSize = stod(argv[3]);
+    int numIterations = stoi(argv[4]);
+    string lsMode = "best_improvement";
+
+    if (argc == 6){
+        lsMode = argv[5];
+    }
+    
+    cout << "Starting GRASP with parameters: " << instanceFile << " " << seed << " " << rclSize << " " << numIterations << " " << lsMode << endl;
 
     // seeding the random number generator
-    rng.seed(1);
+    rng.seed(seed);
 
-    Instance instance("pmed10.txt");
+    Instance instance(instanceFile);
     //cout << instance.path << endl;
 
-    GRASP grasp(instance, 0.5, 10000, "best_improvement");
+    GRASP grasp(instance, rclSize, numIterations, lsMode, seed);
     Solution result = grasp.loop();
 
     return 0;
