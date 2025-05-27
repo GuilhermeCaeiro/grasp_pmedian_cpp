@@ -1,1 +1,2 @@
-# grasp_pmedian_cpp
+# GRASP p-medianC++
+Naive C++ implementation of the GRASP metaheuristic for the p-Median Problem
