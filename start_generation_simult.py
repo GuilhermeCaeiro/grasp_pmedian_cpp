@@ -54,7 +54,7 @@ if gensetup_file_path == "":
     ]
 else:
     print("Retrieving definitions from", gensetup_file_path)
-    gensetup = pd.read_csv(gensetup_file_path, ",", header=None)
+    gensetup = pd.read_csv(gensetup_file_path, sep=",", header=None)
     #print(gensetup)
 
     for index, row in gensetup.iterrows():

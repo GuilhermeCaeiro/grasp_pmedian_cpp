@@ -504,19 +504,21 @@ class GRASP {
 
                 iterationSolutions.push_back(solution.fitness);
 
-                string outputstring = to_string(seed) + "," +
-                    instance->path + "," + 
-                    to_string(rcl_size) + "," +
-                    localSearchMethod + "," +
-                    to_string(iteration + 1) + "," + 
-                    to_string(solution.fitness) + "," +
-                    to_string(bestSolution.fitness) + "," +
-                    ((bestUpdated) ? "true" : "false") + "," +
-                    to_string(iterationsSinceLastMin) + "," +
-                    to_string(iterationsSinceBestCost) + "," +
-                    to_string(totalSingleMinsFound) + "," +
-                    to_string(Utils::msToNum(iterationFinishTime - iterationStartTime)) + "," +
-                    to_string(Utils::msToNum(iterationFinishTime - startTime)) + "\n";
+                // string outputstring = to_string(seed) + "," +
+                //     instance->path + "," + 
+                //     to_string(rcl_size) + "," +
+                //     localSearchMethod + "," +
+                //     to_string(iteration + 1) + "," + 
+                //     to_string(solution.fitness) + "," +
+                //     to_string(bestSolution.fitness) + "," +
+                //     ((bestUpdated) ? "true" : "false") + "," +
+                //     to_string(iterationsSinceLastMin) + "," +
+                //     to_string(iterationsSinceBestCost) + "," +
+                //     to_string(totalSingleMinsFound) + "," +
+                //     to_string(Utils::msToNum(iterationFinishTime - iterationStartTime)) + "," +
+                //     to_string(Utils::msToNum(iterationFinishTime - startTime)) + "\n";
+
+                string outputstring = to_string(solution.fitness) + "\n";
 
                 outfile << outputstring; 
 

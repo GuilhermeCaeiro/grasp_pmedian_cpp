@@ -33,7 +33,8 @@ extension = ".csv"
 
 ## writing output file header
 file = open(file_name + extension, "w")
-file.write("seed,instance,rcl_size,ls_mode,iteration,cost,best_cost,best,iterations_since_last_min, iterations_since_best_cost, total_single_mins_found,time_iteration,time\n")
+#file.write("seed,instance,rcl_size,ls_mode,iteration,cost,best_cost,best,iterations_since_last_min, iterations_since_best_cost, total_single_mins_found,time_iteration,time\n")
+file.write("cost\n")
 file.close()
 
 os.system(command)
